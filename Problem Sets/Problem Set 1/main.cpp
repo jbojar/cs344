@@ -7,10 +7,11 @@
 #include <stdio.h>
 #include "reference_calc.h"
 #include "compare.h"
+#include <time.h>
 
-void your_rgba_to_greyscale(const uchar4 * const h_rgbaImage, 
+void your_rgba_to_greyscale(const uchar4 * const h_rgbaImage,
                             uchar4 * const d_rgbaImage,
-                            unsigned char* const d_greyImage, 
+                            unsigned char* const d_greyImage,
                             size_t numRows, size_t numCols);
 
 //include the definitions of the above functions for this homework
@@ -79,12 +80,15 @@ int main(int argc, char **argv) {
   //check results and output the grey image
   postProcess(output_file, h_greyImage);
 
+  clock_t t0 = clock();
   referenceCalculation(h_rgbaImage, h_greyImage, numRows(), numCols());
+  clock_t t1 = clock();
+  std::cout << "Time spent for referenceCalculation: " << static_cast<double>(t1 - t0) / CLOCKS_PER_SEC << std::endl;
 
   postProcess(reference_file, h_greyImage);
 
   //generateReferenceImage(input_file, reference_file);
-  compareImages(reference_file, output_file, useEpsCheck, perPixelError, 
+  compareImages(reference_file, output_file, useEpsCheck, perPixelError,
                 globalError);
 
   cleanup();
