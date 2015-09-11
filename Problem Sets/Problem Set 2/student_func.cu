@@ -109,16 +109,17 @@ void gaussian_blur(const unsigned char* const inputChannel,
                    const float* const filter, const int filterWidth)
 {
   extern __shared__ float s_filter[];
-  int x = blockDim.x * blockIdx.x + threadIdx.x;
-  int y = blockDim.y * blockIdx.y + threadIdx.y;
-  int idx = y * numCols + x;
 
-  if (idx < filterWidth * filterWidth) {
-      s_filter[idx] = filter[idx];
+  int fidx = threadIdx.x + threadIdx.y * blockDim.x;
+  if (fidx < filterWidth * filterWidth) {
+      s_filter[fidx] = filter[fidx];
   }
   __syncthreads();
 
+  int x = blockDim.x * blockIdx.x + threadIdx.x;
+  int y = blockDim.y * blockIdx.y + threadIdx.y;
   if (x < numCols && y < numRows) {
+    int idx = y * numCols + x;
     float result = 0.f;
     //For every value in the filter around the pixel (c, r)
     for (int filter_y = -filterWidth/2; filter_y <= filterWidth/2; ++filter_y) {
@@ -129,7 +130,7 @@ void gaussian_blur(const unsigned char* const inputChannel,
         int image_x = min(max(x + filter_x, 0), static_cast<int>(numCols - 1));
 
         float image_value = static_cast<float>(inputChannel[image_y * numCols + image_x]);
-        float filter_value = filter[(filter_y + filterWidth/2) * filterWidth + filter_x + filterWidth/2];
+        float filter_value = s_filter[(filter_y + filterWidth/2) * filterWidth + filter_x + filterWidth/2];
 
         result += image_value * filter_value;
       }
